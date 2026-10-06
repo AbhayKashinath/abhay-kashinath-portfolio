@@ -1,0 +1,774 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Planet Zoom</title>
+<meta name="description" content="Planetzoom — the latest digital product by Angadi World Technologies.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;0,800;1,400;1,600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --orange:#FF7A00;
+  --orange-glow:#FF8A1F;
+  --cyan:#1BA6D9;
+  --label:#2E9BD6;
+  --night:#0D1532;
+  --dusk:#3A2446;
+  --ember:#7A3434;
+  --panel-a:#11679C;
+  --panel-b:#0A4672;
+  --ink:#5A5A5E;
+  --paper:#F2F3F5;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{
+  font-family:Montserrat,system-ui,sans-serif;
+  color:#fff;
+  background:var(--night);
+  line-height:1.45;
+  overflow-x:hidden;
+}
+
+/* ---------- fixed sky + globe ---------- */
+.sky{
+  position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(120% 60% at 30% 110%, rgba(150,60,60,.55), transparent 60%),
+    radial-gradient(90% 50% at 85% 105%, rgba(110,50,90,.5), transparent 65%),
+    linear-gradient(180deg,#0B1330 0%,#121a3d 45%,#22213f 72%,var(--dusk) 88%,var(--ember) 100%);
+}
+.sky::after{ /* faint stars */
+  content:"";position:absolute;inset:0;opacity:.5;
+  background-image:
+    radial-gradient(1px 1px at 12% 18%,#fff8,transparent),
+    radial-gradient(1px 1px at 38% 9%,#fff6,transparent),
+    radial-gradient(1px 1px at 64% 22%,#fff7,transparent),
+    radial-gradient(1px 1px at 82% 12%,#fff5,transparent),
+    radial-gradient(1px 1px at 91% 41%,#fff6,transparent),
+    radial-gradient(1px 1px at 55% 47%,#fff4,transparent),
+    radial-gradient(1px 1px at 22% 58%,#fff5,transparent),
+    radial-gradient(1px 1px at 7% 36%,#fff6,transparent);
+}
+#globe{position:fixed;inset:0;z-index:1;pointer-events:none;width:100%;height:100%}
+
+main{position:relative;z-index:2}
+section{
+  position:relative;
+  min-height:100vh;
+  padding:clamp(72px,9vh,110px) clamp(16px,5vw,80px);
+  display:grid;
+  align-items:center;
+}
+
+/* ---------- shared pieces ---------- */
+.logo{display:block;width:100%;height:auto}
+.anchor{position:relative;aspect-ratio:1;width:100%;display:grid;place-items:center}
+
+.hgroup{position:relative;padding-top:clamp(28px,4.2vw,58px)}
+.ghost{
+  position:absolute;top:0;right:0;
+  font-size:clamp(42px,6.4vw,92px);
+  font-weight:200;line-height:1;white-space:nowrap;
+  color:rgba(255,255,255,.17);
+  pointer-events:none;user-select:none;
+}
+.hgroup.left .ghost{left:0;right:auto}
+h2{font-size:clamp(17px,1.5vw,21px);font-weight:700;letter-spacing:.02em;position:relative}
+
+.panel{
+  position:relative;
+  background:linear-gradient(165deg,var(--panel-a),var(--panel-b));
+  box-shadow:0 26px 50px -18px rgba(0,0,0,.7);
+  padding:clamp(20px,2.4vw,34px);
+  font-weight:600;
+}
+.panel p+p{margin-top:1.1em}
+
+/* information cards: heading + orange dot; the box opens from the dot */
+.card h2{text-align:center}
+.dot{
+  display:block;margin:16px auto 18px;width:26px;height:26px;border-radius:50%;border:0;padding:0;cursor:pointer;
+  background:var(--orange);position:relative;
+  box-shadow:0 0 0 5px rgba(255,122,0,.18),0 0 24px 5px rgba(255,122,0,.55);
+  transition:transform .2s;
+}
+.dot::after{content:"";position:absolute;inset:-11px;border-radius:50%;border:1.5px dashed rgba(255,122,0,.55)}
+.dot:focus-visible{outline:2px solid var(--cyan);outline-offset:10px}
+.card .panel{
+  opacity:0;visibility:hidden;pointer-events:none;
+  transform:scale(.35);transform-origin:50% -30px;
+  transition:opacity .22s ease,transform .32s cubic-bezier(.2,.8,.2,1),visibility 0s linear .32s;
+}
+.card.open .panel,
+.card:has(.dot:focus-visible) .panel{
+  opacity:1;visibility:visible;pointer-events:auto;transform:none;
+  transition:opacity .22s ease,transform .32s cubic-bezier(.2,.8,.2,1);
+}
+.card.open .dot{transform:scale(1.15)}
+@media (hover:hover){
+  .card:hover .panel{opacity:1;visibility:visible;pointer-events:auto;transform:none;
+    transition:opacity .22s ease,transform .32s cubic-bezier(.2,.8,.2,1)}
+  .card:hover .dot{transform:scale(1.15)}
+}
+@media (prefers-reduced-motion:reduce){
+  .card .panel,.card .panel *{transition:none !important}
+}
+
+/* ---------- header ---------- */
+.topnav{position:fixed;top:0;right:0;z-index:6;padding:22px clamp(16px,4.5vw,64px)}
+.topnav ul{list-style:none;display:flex;gap:clamp(18px,2.6vw,40px)}
+.topnav a{color:#fff;text-decoration:none;font-weight:600;font-size:14px;letter-spacing:.02em;
+  padding:6px 0;border-bottom:2px solid transparent;transition:border-color .2s,color .2s;
+  text-shadow:0 1px 8px rgba(13,21,50,.5)}
+.topnav a:hover{color:var(--orange)}
+.topnav a[aria-current="true"]{border-bottom-color:var(--orange)}
+section{scroll-margin-top:0}
+.center{text-align:center}
+
+.orb{position:absolute;border-radius:50%;background:var(--orange-glow);pointer-events:none;
+  box-shadow:0 0 18px 6px rgba(255,122,0,.55);opacity:.85}
+
+/* ---------- phone mockup ---------- */
+.phone{
+  --w:150px;
+  width:var(--w);aspect-ratio:9/18.6;
+  font-size:calc(var(--w) / 15);
+  background:#0c0c0e;border-radius:1.9em;padding:.45em;
+  box-shadow:0 0 0 .12em #3a3a40, 0 2.4em 3em -1em rgba(0,0,0,.75);
+  position:relative;flex:none;
+}
+.phone::before{content:"";position:absolute;top:.45em;left:50%;translate:-50% 0;width:5em;height:1.1em;background:#0c0c0e;border-radius:0 0 .8em .8em;z-index:2}
+.screen{height:100%;border-radius:1.5em;overflow:hidden;background:#1b1b1d;display:flex;flex-direction:column}
+.p-top{background:var(--orange);padding:1.5em .8em .5em;display:flex;align-items:center;gap:.5em}
+.p-ham{width:1.2em;height:.8em;border-block:.18em solid #fff;position:relative}
+.p-ham::after{content:"";position:absolute;inset:50% 0 auto;height:.18em;background:#fff;translate:0 -50%}
+.p-av{width:1.7em;height:1.7em;border-radius:50%;background:radial-gradient(circle at 50% 38%,#f3c7a6 30%,#3b2a25 32%);border:.12em solid #fff}
+.p-name{flex:1;display:grid;gap:.25em}
+.p-name i{display:block;height:.35em;border-radius:.2em;background:#fff;width:80%}
+.p-name i+i{width:45%;opacity:.8}
+.p-brand{font-size:.55em;font-weight:800;line-height:1;color:#fff;text-align:right}
+.p-brand b{display:block;font-size:1.5em}
+.p-chat{width:1.4em;height:1.1em;background:#fff;border-radius:.25em;opacity:.95}
+.p-bar{background:var(--orange);padding:.2em .8em 1em;display:flex;align-items:center;gap:.5em}
+.p-btn{width:1.7em;height:1.7em;border-radius:50%;background:#ff9a3c;box-shadow:inset 0 0 0 .14em #fff3}
+.p-search{flex:1;height:1.9em;border-radius:1em;background:#fff;display:flex;align-items:center;padding-left:.6em;font-weight:800;font-size:1em}
+.p-search span{background:conic-gradient(#4285F4 0 25%,#EA4335 0 50%,#FBBC05 0 75%,#34A853 0);-webkit-background-clip:text;background-clip:text;color:transparent}
+.p-scan{flex:1;display:grid;place-items:center;position:relative;background:#1b1b1d}
+.p-frame{width:8.6em;aspect-ratio:1;position:relative;background:#0e0e10;
+  background-image:linear-gradient(180deg,transparent 52%,rgba(27,166,217,.75) 56%,rgba(27,166,217,.15) 70%,transparent 74%)}
+.p-frame::before,.p-frame::after{content:"";position:absolute;inset:-.5em;
+  border:.18em solid var(--cyan);
+  -webkit-mask:linear-gradient(#000 0 0) top left/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) top right/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) bottom left/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) bottom right/1.6em 1.6em no-repeat;
+          mask:linear-gradient(#000 0 0) top left/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) top right/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) bottom left/1.6em 1.6em no-repeat,linear-gradient(#000 0 0) bottom right/1.6em 1.6em no-repeat}
+.p-frame::after{display:none}
+.p-tools{display:flex;gap:1.4em;justify-content:center;padding:.6em 0 .9em;background:#1b1b1d}
+.p-tools i{width:1.3em;height:1.3em;border-radius:50%;background:#e9e9ea}
+.p-nav{background:var(--cyan);padding:.8em .5em 1.1em;display:flex;justify-content:space-around}
+.p-nav i{width:1.75em;height:1.75em;border-radius:50%;border:.15em solid #fff;background:rgba(255,255,255,.18)}
+
+/* ---------- 1 · product (hero) ---------- */
+.hero{grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:clamp(24px,4vw,64px);overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;z-index:-1;
+  background:linear-gradient(115deg,#fff 0%,var(--paper) 30%,rgba(214,214,224,.85) 52%,rgba(160,150,175,.35) 68%,transparent 80%);
+  clip-path:polygon(0 0,88% 0,38% 100%,0 100%);
+  /* soft lower edge + scroll-driven fade so the white melts into the night sky */
+  -webkit-mask:linear-gradient(180deg,#000 55%,transparent 100%);
+          mask:linear-gradient(180deg,#000 55%,transparent 100%);
+  opacity:calc(1 - var(--fade,0));
+}
+.hero-copy{color:color-mix(in srgb,var(--ink),#fff calc(var(--fade,0) * 100%));display:grid;gap:clamp(24px,4vh,44px);grid-template-columns:minmax(0,.95fr) minmax(0,1fr);align-items:end;max-width:760px}
+.hero-copy .logo{max-width:300px;grid-column:1}
+.hero-copy h1{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+.tagline{grid-column:2;font-weight:700;font-size:clamp(13px,1.05vw,15px);line-height:1.4;opacity:.9}
+.hero-copy .lead{grid-column:1 / -1;font-size:clamp(14px,1.15vw,16.5px);font-weight:500;max-width:62ch}
+.hero-right{position:relative;align-self:stretch;display:grid;align-items:center}
+.hero-right .ghost{top:-8px;right:0;color:rgba(255,255,255,.55)}
+.hero-right .anchor{max-width:520px;justify-self:end}
+.hero-right .anchor .logo{width:58%}
+
+/* ---------- 2 · who are we ---------- */
+.who{grid-template-columns:minmax(0,.9fr) minmax(0,1fr);gap:clamp(24px,4vw,70px)}
+.who .anchor{max-width:460px}
+.who-right{display:grid;gap:clamp(48px,9vh,110px)}
+.solutions{font-size:clamp(14px,1.35vw,19px);font-weight:500;text-align:center;max-width:36em;justify-self:center;line-height:1.35}
+.solutions b{font-weight:800}
+.who .hgroup{max-width:520px;justify-self:center;width:100%}
+.who .hgroup h2{text-align:center;margin-bottom:10px}
+.who .panel{text-align:center}
+
+/* ---------- 3 · why ---------- */
+.why{grid-template-columns:minmax(0,.9fr) minmax(0,1fr);gap:clamp(24px,4vw,70px);grid-template-rows:auto auto}
+.why .anchor{max-width:460px;grid-row:1}
+.why-right{display:grid;gap:clamp(40px,7vh,80px)}
+.why .hgroup{max-width:440px;width:100%;justify-self:center}
+.why .hgroup h2{text-align:center;margin-bottom:10px}
+.why .panel{text-align:center;padding-block:clamp(30px,3.6vw,48px)}
+.why-points{font-weight:500;font-size:clamp(14px,1.2vw,17px);max-width:40em}
+.closing{grid-column:1 / -1;text-align:center;font-weight:500;max-width:58em;justify-self:center;font-size:clamp(14px,1.2vw,17px)}
+
+/* ---------- 4 · features ---------- */
+.features{grid-template-columns:minmax(0,1.25fr) minmax(0,.75fr);grid-template-rows:auto auto;gap:clamp(20px,3vw,48px) clamp(24px,4vw,60px)}
+.features .anchor{max-width:600px;justify-self:center;margin-inline:clamp(0px,5vw,90px)}
+.feat-word{
+  font-size:clamp(44px,7vw,104px);font-weight:800;font-style:italic;letter-spacing:.02em;
+  color:var(--label);transform:perspective(600px) rotateY(-14deg) rotateZ(-14deg) skewX(-6deg);
+  text-shadow:0 .06em 0 #145b86,0 .12em .3em rgba(0,0,0,.4);
+}
+.qr{display:flex;gap:20px;align-items:flex-start;grid-row:1 / span 2;grid-column:2;align-self:center}
+.qr .hgroup{flex:1;min-width:0}
+.qr .hgroup h2{text-align:center;margin-bottom:0}
+.qr .panel{font-size:clamp(12.5px,.95vw,14px);text-align:center;margin-top:0}
+.qr .panel ol{list-style:none;margin-top:1.1em;display:grid;gap:.15em}
+.qr .phone{--w:116px;margin-top:150px}
+.sd{grid-column:1;max-width:760px}
+.sd .hgroup{padding-top:clamp(20px,3vw,44px)}
+.sd .ghost{left:50%;right:auto;translate:-50% 0}
+.sd h2{text-align:center;margin-bottom:10px}
+.sd p{font-weight:500;font-size:clamp(13.5px,1.1vw,16px)}
+.sd p+p{margin-top:1.1em}
+.sd p:first-of-type{font-style:italic}
+
+/* ---------- 5 · smart display ---------- */
+.display{grid-template-columns:minmax(0,1.3fr) minmax(0,.7fr);gap:clamp(24px,4vw,60px)}
+.display .anchor{max-width:640px}
+.fan{position:relative;width:100%;height:100%}
+.fan .phone{position:absolute;top:50%;translate:0 -50%}
+.display .hgroup h2{text-align:center;margin-bottom:0}
+.display .panel{font-size:clamp(13.5px,1.08vw,16px);font-weight:500}
+.display .panel em{display:block}
+.display ul{list-style:none;margin-top:.4em}
+.display li{padding-left:1.4em;position:relative}
+.display li::before{content:"•";position:absolute;left:.2em}
+.display h3{font-size:1em;font-weight:500;margin-top:1.2em}
+
+/* ---------- 6 · services ---------- */
+.services{grid-template-columns:minmax(0,.85fr) minmax(0,1.5fr) minmax(0,.85fr);grid-template-rows:1fr 1fr;gap:clamp(20px,3vw,40px)}
+.services .anchor{grid-column:2;grid-row:1 / span 2;max-width:560px;justify-self:center}
+.svc{max-width:380px}
+.svc h2{margin-bottom:12px}
+.svc p{font-weight:500;font-size:clamp(14px,1.15vw,17px)}
+.svc.bulk{grid-column:1;grid-row:1;align-self:start;justify-self:start}
+.svc.party{grid-column:1;grid-row:2;align-self:end;justify-self:start}
+.svc.bill{grid-column:3;grid-row:1 / span 2;align-self:center}
+.svc.bulk .hgroup h2,.svc.party .hgroup h2{padding-left:clamp(0px,7vw,120px)}
+.svc.bill .hgroup h2{text-align:center}
+.svc.bill .panel{font-weight:500;overflow-wrap:anywhere}
+.trio{position:relative;width:100%;height:100%}
+.trio .phone{position:absolute;translate:-50% -50%}
+
+/* ---------- section nav ---------- */
+.dots{position:fixed;right:clamp(10px,1.6vw,26px);top:50%;translate:0 -50%;z-index:5;display:grid;gap:14px}
+.dots a{display:block;width:12px;height:12px;border-radius:50%;border:2px solid rgba(255,255,255,.55);position:relative;transition:background .2s,border-color .2s,transform .2s}
+.dots a[aria-current="true"]{background:var(--orange);border-color:var(--orange);transform:scale(1.25)}
+.dots a span{position:absolute;right:22px;top:50%;translate:0 -50%;white-space:nowrap;font-size:12px;font-weight:600;
+  background:rgba(10,20,45,.85);padding:4px 10px;border-radius:4px;opacity:0;pointer-events:none;transition:opacity .15s}
+.dots a:hover span,.dots a:focus-visible span{opacity:1}
+a:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+
+/* ---------- responsive ---------- */
+@media (max-width:900px){
+  section{grid-template-columns:1fr !important;grid-template-rows:none !important;min-height:auto;gap:40px;padding-block:72px}
+  section > *{grid-column:1 !important;grid-row:auto !important}
+  .anchor{max-width:min(86vw,440px) !important;justify-self:center !important}
+  .hero{padding-top:48px}
+  .hero::before{background:linear-gradient(180deg,#fff 0%,var(--paper) 50%,rgba(214,214,224,.9) 70%,transparent 100%);
+    clip-path:polygon(0 0,100% 0,100% calc(100% - 470px),0 calc(100% - 370px))}
+  .hero-copy{grid-template-columns:1fr}
+  .hero-copy .logo,.tagline{grid-column:1}
+  .hero-right .ghost{position:static;display:block;text-align:right;color:rgba(255,255,255,.4);margin-bottom:12px}
+  .hero-right .anchor{justify-self:center}
+  .qr{flex-direction:column;align-items:center}
+  .qr .phone{margin-top:0;order:-1}
+  .sd .ghost{white-space:normal}
+  .svc{max-width:none;justify-self:stretch !important}
+  .svc.bulk .hgroup h2,.svc.party .hgroup h2{padding-left:0}
+  .ghost{font-size:clamp(30px,10vw,56px)}
+  .dots{display:none}
+  .hero::before{-webkit-mask:linear-gradient(180deg,#000 72%,transparent 100%);mask:linear-gradient(180deg,#000 72%,transparent 100%)}
+  /* closed cards take no room on small screens */
+  .card .panel{display:none}
+  .card.open .panel,.card:has(.dot:focus-visible) .panel{display:block}
+  .topnav{left:0;padding:10px 12px}
+  .topnav ul{justify-content:flex-end;gap:4px;background:rgba(13,21,50,.6);-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);
+    border-radius:999px;padding:4px 14px;width:max-content;margin-left:auto}
+  .topnav a{font-size:12.5px;display:block;padding:6px 8px}
+  .orb{display:none}
+}
+</style>
+</head>
+<body>
+
+<!-- logo symbol -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="pz-logo" viewBox="0 0 330 150">
+    <text x="4" y="46" font-family="Montserrat,sans-serif" font-size="52" font-weight="600" fill="#FF7A00" letter-spacing="3">PLANET</text>
+    <text x="0" y="141" font-family="Montserrat,sans-serif" font-size="106" font-weight="500" fill="#FF7A00">Z</text>
+    <g transform="rotate(40 112 103)">
+      <circle cx="112" cy="103" r="33" fill="none" stroke="#1BA6D9" stroke-width="9" stroke-dasharray="43 8.8"/>
+    </g>
+    <circle cx="112" cy="103" r="18" fill="#1BA6D9"/>
+    <path d="M104 92c4 1 6 4 4 7s1 6 4 6m6-17c-3 3 1 5 4 6m-14 15c3-2 6 0 7 3" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>
+    <g transform="rotate(40 196 103)">
+      <circle cx="196" cy="103" r="33" fill="none" stroke="#1BA6D9" stroke-width="9" stroke-dasharray="43 8.8"/>
+    </g>
+    <path d="M196 80a14 14 0 0 1 14 14c0 11-14 27-14 27s-14-16-14-27a14 14 0 0 1 14-14z" fill="#1BA6D9"/>
+    <circle cx="196" cy="94" r="5.2" fill="#fff"/>
+    <text x="238" y="141" font-family="Montserrat,sans-serif" font-size="106" font-weight="500" fill="#FF7A00">M</text>
+  </symbol>
+</svg>
+
+<!-- phone template (cloned by script) -->
+<template id="phone-tpl">
+  <div class="phone" aria-hidden="true"><div class="screen">
+    <div class="p-top"><span class="p-ham"></span><span class="p-av"></span><span class="p-name"><i></i><i></i></span><span class="p-brand">PLANET<b>zoom</b></span><span class="p-chat"></span></div>
+    <div class="p-bar"><span class="p-btn"></span><span class="p-search"><span>G</span></span><span class="p-btn"></span></div>
+    <div class="p-scan"><div class="p-frame"></div></div>
+    <div class="p-tools"><i></i><i></i></div>
+    <div class="p-nav"><i></i><i></i><i></i><i></i><i></i></div>
+  </div></div>
+</template>
+
+<div class="sky" aria-hidden="true"></div>
+<canvas id="globe" aria-hidden="true"></canvas>
+
+<header class="topnav">
+  <nav aria-label="Main">
+    <ul>
+      <li><a href="#product" data-top>Home</a></li>
+      <li><a href="#who">About Planet Zoom</a></li>
+      <li><a href="#features">Features</a></li>
+    </ul>
+  </nav>
+</header>
+
+<nav class="dots" aria-label="Sections">
+  <a href="#product"><span>Product</span></a>
+  <a href="#who"><span>Who are we?</span></a>
+  <a href="#why"><span>Why Planet Zoom?</span></a>
+  <a href="#features"><span>Features</span></a>
+  <a href="#smart-display"><span>Smart Display</span></a>
+  <a href="#services"><span>Bulk Messaging, Bill Payments, Party Planner</span></a>
+</nav>
+
+<main>
+
+  <!-- 1 · PRODUCT -->
+  <section class="hero" id="product">
+    <div class="hero-copy">
+      <h1>Planet Zoom</h1>
+      <svg class="logo" role="img" aria-label="Planet Zoom"><use href="#pz-logo"/></svg>
+      <p class="tagline">Planetzoom is the latest Digital product by Angadi World Technologies, designed to skip, resolute and also simplified for the forthcoming digital revolution.</p>
+      <p class="lead">In the present market, there are many smart applications catering to the high end customers, however not much are in existence for individuals and small scale players. This mobile application is developed with latest technology to meet various kinds of user requirements with simplified solutions. It is designed for both operating systems, ANDROID as well as IOS with simplified multiple services which helps in daily various needs. Our app allows you to save your time &amp; Money, spending on your daily works.It has bought multiple services and features under one app. Planet zoom is essential for every individual and Business.</p>
+    </div>
+    <div class="hero-right">
+      <span class="ghost" aria-hidden="true">PRODUCT</span>
+      <div class="anchor" data-globe data-scale="0.82" data-alpha="1">
+        <svg class="logo" aria-hidden="true"><use href="#pz-logo"/></svg>
+      </div>
+    </div>
+    <span class="orb" style="width:22px;height:22px;right:4%;top:62%"></span>
+    <span class="orb" style="width:26px;height:26px;right:38%;bottom:8%"></span>
+  </section>
+
+  <!-- 2 · WHO ARE WE -->
+  <section class="who" id="who">
+    <div class="anchor" data-globe data-scale="0.78" data-alpha="1">
+      <div data-phone style="--w:clamp(96px,10vw,140px)"></div>
+    </div>
+    <div class="who-right">
+      <p class="solutions"><b>SIMPLIFIED SOLUTIONS IN TERMS OF:</b> LOCATIONS, NAVIGATION, ADVERTISEMENTS, BILLING, PAYMENTS, SEARCH, DISPLAY BOARDS, AND MOMENTS.</p>
+      <div class="hgroup card">
+        <span class="ghost" aria-hidden="true">WHO ARE WE?</span>
+        <h2 id="h-who">WHO ARE WE?</h2>
+        <button class="dot" type="button" aria-expanded="false" aria-controls="p-who" aria-labelledby="h-who"></button>
+        <div class="panel" id="p-who" role="region" aria-labelledby="h-who">
+          <p>We are a team of energetic professionals having expertise in the latest IT operations who can offer the best solutions needed for the business organisations. Within a short duration, we have carved a niche for ourselves in the digital market.</p>
+          <p>PLANETZOOM is the latest Digital product by Angadi World Technologies, designed to skip, resolute and also simplified for the forthcoming digital revolution.</p>
+        </div>
+      </div>
+    </div>
+    <span class="orb" style="width:24px;height:24px;left:4%;top:56%"></span>
+  </section>
+
+  <!-- 3 · WHY PLANET ZOOM -->
+  <section class="why" id="why">
+    <div class="anchor" data-globe data-scale="0.8" data-alpha="1">
+      <div data-phone style="--w:clamp(96px,10vw,140px)"></div>
+    </div>
+    <div class="why-right">
+      <div class="hgroup card">
+        <span class="ghost" aria-hidden="true">WHY PLANET ZOOM?</span>
+        <h2 id="h-why">WHY PLANET ZOOM?</h2>
+        <button class="dot" type="button" aria-expanded="false" aria-controls="p-why" aria-labelledby="h-why"></button>
+        <div class="panel" id="p-why" role="region" aria-labelledby="h-why">
+          <p>In the present market, there are many smart applications catering to the high end customers, however not much are in existence for individuals and small scale players.</p>
+        </div>
+      </div>
+      <div class="why-points">
+        PLANET ZOOM is the mobile application developed with latest technology to meet various kinds of user requirements with simplified solutions.<br>
+        Planet Zoom app is designed for both operating systems, ANDROID as well as IOS with simplified multiple services which helps in daily various needs.<br>
+        Planet zoom app allows you to save your time &amp; Money, spending on your daily works.<br>
+        Hence planet zoom has bought multiple services and features under one app. Planet zoom is essential for every individual and Business.
+      </div>
+    </div>
+    <p class="closing">Hence planet zoom has bought multiple services and features under one app. Planet zoom is essential for every individual and Business.</p>
+    <span class="orb" style="width:24px;height:24px;left:5%;top:48%"></span>
+  </section>
+
+  <!-- 4 · FEATURES / SMART QR / SMART DISPLAY -->
+  <section class="features" id="features">
+    <div class="anchor" data-globe data-scale="0.84" data-alpha="1" data-labels="1">
+      <h2 class="feat-word">FEATURES</h2>
+    </div>
+    <div class="qr">
+      <div class="hgroup card">
+        <span class="ghost" aria-hidden="true">SMART QR</span>
+        <h2 id="h-qr">SMART QR</h2>
+        <button class="dot" type="button" aria-expanded="false" aria-controls="p-qr" aria-labelledby="h-qr"></button>
+        <div class="panel" id="p-qr" role="region" aria-labelledby="h-qr">
+          <p>Generate Qr code through our app&nbsp; and utilise the following benefits.</p>
+          <ol>
+            <li>1.&nbsp; Now you can share your location more securely as you desired either for permanent or temporary use by generating /sharing smart Qr.</li>
+            <li>2. Hassle free accurate locations for accessing and sharing.</li>
+            <li>3. You can share your visiting card, contact or portfolio digitally.</li>
+            <li>4. Send encoded messages to people directly through Qr code.</li>
+            <li>5. Easy communication between customers and business.</li>
+            <li>6. Unique way to approach customers, advertise, get feedback, suggestions and ratings.</li>
+            <li>7. Can generate self Qr code for any products to sell, receive payments, manage Products, and advertise.</li>
+            <li>8. Sell product or service online without ecommerce website.</li>
+          </ol>
+        </div>
+      </div>
+      <div data-phone style="--w:116px"></div>
+    </div>
+    <div class="sd">
+      <div class="hgroup">
+        <span class="ghost" aria-hidden="true">SMART DISPLAY</span>
+        <h2>SMART DISPLAY</h2>
+      </div>
+      <p>SAVE TIME, MONEY AND ENVIRONMENT GET INSTANT MINIWEBSITE FOR EVERY INDIVIDUAL.</p>
+      <p>Fed up with expenses on advertisement, sign board, and pamphlets for your Business.<br>
+      Are you spending lot of money for websites? Then here is the&nbsp; solution<br>
+      Now Hassle free and no more worries of new flex, new hoardings and new designs to update your latest Information, new Offers, andadvertise new products. Planet zoom brings you smart display system where you can save money, time &amp; Environment.</p>
+    </div>
+    <span class="orb" style="width:26px;height:26px;left:3%;top:40%"></span>
+  </section>
+
+  <!-- 5 · WHAT IS SMART DISPLAY -->
+  <section class="display" id="smart-display">
+    <div class="anchor" data-globe data-scale="0.9" data-alpha="0.95">
+      <div class="fan" id="fan"></div>
+    </div>
+    <div class="hgroup card">
+      <span class="ghost" aria-hidden="true">SMART DISPLAY</span>
+      <h2 id="h-sd">What is Smart Display?</h2>
+      <button class="dot" type="button" aria-expanded="false" aria-controls="p-sd" aria-labelledby="h-sd"></button>
+      <div class="panel" id="p-sd" role="region" aria-labelledby="h-sd">
+        <em>Smart display is the board which contains qr code,</em>
+        <p>Qr code contains all the below info and results</p>
+        <ul>
+          <li>Name of the shop/company or Enterprise</li>
+          <li>Location-Contact details</li>
+          <li>Logo /Images</li>
+          <li>Email /Website</li>
+          <li>Description of products</li>
+          <li>Offers</li>
+          <li>Ratings /Likes</li>
+          <li>Menu</li>
+          <li>Bill</li>
+        </ul>
+        <h3>Benefits</h3>
+        <ul>
+          <li>Easy to promote business</li>
+          <li>Easy to send location</li>
+          <li>Easy to get feedback</li>
+          <li>Customer and merchant relationship made easy</li>
+          <li>Easy to sell product online without e commerce</li>
+        </ul>
+        <p style="margin-top:0">Individuals&nbsp; can scan qr code too</p>
+      </div>
+    </div>
+    <span class="orb" style="width:30px;height:30px;left:4%;top:72%"></span>
+  </section>
+
+  <!-- 6 · BULK MESSAGING / BILL PAYMENTS / PARTY PLANNER -->
+  <section class="services" id="services">
+    <div class="svc bulk">
+      <div class="hgroup left">
+        <span class="ghost" aria-hidden="true">BULK MESSAGING</span>
+        <h2>BULK MESSAGING</h2>
+      </div>
+      <p>Send bulk promotional messages free of cost and pre-defined templates which attracts customers through planet zoom chat.</p>
+    </div>
+    <div class="anchor" data-globe data-scale="1.02" data-alpha="0.9">
+      <div class="trio">
+        <div data-phone style="--w:clamp(60px,6.4vw,92px);left:30%;top:24%;position:absolute"></div>
+        <div data-phone style="--w:clamp(72px,7.6vw,108px);left:72%;top:48%;position:absolute"></div>
+        <div data-phone style="--w:clamp(60px,6.4vw,92px);left:34%;top:80%;position:absolute"></div>
+      </div>
+    </div>
+    <div class="svc bill">
+      <div class="hgroup card">
+        <span class="ghost" aria-hidden="true">BILL PAYMENTS</span>
+        <h2 id="h-bill">BILL PAYMENTS</h2>
+        <button class="dot" type="button" aria-expanded="false" aria-controls="p-bill" aria-labelledby="h-bill"></button>
+        <div class="panel" id="p-bill" role="region" aria-labelledby="h-bill">
+          <p>Pay your bills with planet self-billing mode by scanning planet zoom QR code or entering planet zoom id more securely Send or receive money from anyone, anywhere across the country. Angadiworldbangalore07091111 Awtbangalore07091111rgd</p>
+        </div>
+      </div>
+    </div>
+    <div class="svc party">
+      <div class="hgroup left">
+        <span class="ghost" aria-hidden="true">PARTY PLANNER</span>
+        <h2>PARTY PLANNER</h2>
+      </div>
+      <p>FAMILY - Get-togethers, Marriages, Birthday Parties, Ceremony’s etc, you can plan them all.</p>
+    </div>
+  </section>
+
+</main>
+
+<script>
+/* ---------- phones ---------- */
+(function(){
+  const tpl = document.getElementById('phone-tpl');
+  document.querySelectorAll('[data-phone]').forEach(slot=>{
+    const p = tpl.content.firstElementChild.cloneNode(true);
+    p.style.cssText = slot.getAttribute('style') || '';
+    if (slot.closest('.trio')) p.style.translate = '-50% -50%';
+    slot.replaceWith(p);
+  });
+  // fanned stack for "What is Smart Display?"
+  const fan = document.getElementById('fan');
+  const n = 6;
+  for (let i=0;i<n;i++){
+    const p = tpl.content.firstElementChild.cloneNode(true);
+    const k = i/(n-1);                       // 0 = far, 1 = front
+    const w = 52 + k*k*118;                  // px at desktop scale
+    p.style.setProperty('--w', `calc(${w}px * var(--fs,1))`);
+    p.style.left = (6 + k*58) + '%';
+    p.style.zIndex = i;
+    p.style.filter = `brightness(${0.55 + k*0.45})`;
+    fan.appendChild(p);
+  }
+  const fit = ()=>{ fan.style.setProperty('--fs', Math.min(1.25, fan.clientWidth/560)); };
+  new ResizeObserver(fit).observe(fan); fit();
+})();
+
+/* ---------- globe ---------- */
+(function(){
+  const cvs = document.getElementById('globe');
+  const ctx = cvs.getContext('2d');
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)');
+  const anchors = [...document.querySelectorAll('[data-globe]')];
+
+  // seeded random so the network is identical on every load
+  let seed = 7;
+  const rnd = ()=> (seed = (seed*16807) % 2147483647) / 2147483647;
+
+  // points on a sphere (fibonacci + jitter)
+  const N = 170, pts = [];
+  const ga = Math.PI*(3-Math.sqrt(5));
+  for (let i=0;i<N;i++){
+    const y = 1 - (i/(N-1))*2;
+    const rr = Math.sqrt(1-y*y);
+    const th = ga*i + (rnd()-.5)*.6;
+    const yy = Math.max(-1,Math.min(1,y + (rnd()-.5)*.06));
+    const r2 = Math.sqrt(1-yy*yy);
+    pts.push({x:Math.cos(th)*r2, y:yy, z:Math.sin(th)*r2, s: rnd()<.12 ? 2.1 : .9 + rnd()*.9});
+  }
+  // edges: each point to its 3 nearest neighbours, plus some long chords
+  const edges = new Set();
+  pts.forEach((p,i)=>{
+    const d = pts.map((q,j)=>[j,(p.x-q.x)**2+(p.y-q.y)**2+(p.z-q.z)**2]).filter(a=>a[0]!==i).sort((a,b)=>a[1]-b[1]);
+    for (let k=0;k<3;k++){ const j=d[k][0]; edges.add(i<j?i+'-'+j:j+'-'+i); }
+    if (rnd()<.08){ const j = d[6+Math.floor(rnd()*8)][0]; edges.add(i<j?i+'-'+j:j+'-'+i); }
+  });
+  const E = [...edges].map(s=>s.split('-').map(Number));
+
+  // feature labels pinned to sphere points
+  const labelNames = ['DISPLAY BOARDS','TRAVELLING','SEARCH','PAYMENTS','ADVERTISEMENTS','BILLING','NAVIGATION','TIME LINE','TRACKING','LOCATIONS'];
+  const labels = labelNames.map((t,i)=>{
+    const lon = i/labelNames.length*Math.PI*2, lat = ((i%3)-1)*.42 + (i%2?.12:-.08);
+    return {t, x:Math.cos(lat)*Math.cos(lon), y:Math.sin(lat), z:Math.cos(lat)*Math.sin(lon)};
+  });
+
+  let W=0,H=0,dpr=1;
+  function size(){
+    dpr = Math.min(window.devicePixelRatio||1, 2);
+    W = innerWidth; H = innerHeight;
+    cvs.width = W*dpr; cvs.height = H*dpr;
+    ctx.setTransform(dpr,0,0,dpr,0,0);
+  }
+  addEventListener('resize', size); size();
+
+  // where should the globe be? Blend between the two anchors around the viewport centre.
+  function target(){
+    const v = H/2;
+    const R = anchors.map(a=>{
+      const b = a.getBoundingClientRect();
+      return {cx:b.left+b.width/2, cy:b.top+b.height/2, r:b.width/2*(+a.dataset.scale||.8),
+              al:+a.dataset.alpha||1, lb:a.dataset.labels?1:0};
+    });
+    let i = 0;
+    while (i < R.length-1 && R[i+1].cy <= v) i++;
+    const a = R[i], b = R[Math.min(i+1,R.length-1)];
+    let t = (a===b || a.cy>=v) ? 0 : (v-a.cy)/(b.cy-a.cy);
+    // dwell: the globe rides with its anchor, then hands over to the next one mid-way
+    t = Math.max(0,Math.min(1,(t-.3)/.4));
+    t = t*t*(3-2*t);
+    const L = (p,q)=>p+(q-p)*t;
+    const lb = L(a.lb,b.lb);
+    // on narrow screens shrink the globe while labels are out so they stay on screen
+    const r = L(a.r,b.r) * (W < 700 ? 1 - .3*lb : 1);
+    return {cx:L(a.cx,b.cx), cy:L(a.cy,b.cy), r, al:L(a.al,b.al), lb};
+  }
+
+  const ORANGE = '255,122,0';
+  let spin = 0, last = performance.now();
+
+  function frame(now){
+    const dt = Math.min(64, now-last); last = now;
+    if (!reduce.matches) spin += dt*0.00011;
+    const g = target();
+    ctx.clearRect(0,0,W,H);
+    if (g.r < 4) { requestAnimationFrame(frame); return; }
+
+    const ry = spin + scrollY*0.0009, rx = -0.32;
+    const cy_ = Math.cos(ry), sy_ = Math.sin(ry), cx_ = Math.cos(rx), sx_ = Math.sin(rx);
+    const proj = p=>{
+      const x1 = p.x*cy_ - p.z*sy_, z1 = p.x*sy_ + p.z*cy_;
+      const y2 = p.y*cx_ - z1*sx_, z2 = p.y*sx_ + z1*cx_;
+      const s = 3/(3 - z2);                       // mild perspective, z2>0 is toward viewer
+      return {X:g.cx + x1*g.r*s, Y:g.cy + y2*g.r*s, z:z2};
+    };
+    const P = pts.map(proj);
+    ctx.globalAlpha = g.al;
+
+    // dotted outline + broken orbit ring
+    ctx.lineWidth = 1;
+    ctx.setLineDash([2,5]);
+    ctx.strokeStyle = `rgba(${ORANGE},.45)`;
+    ctx.beginPath(); ctx.arc(g.cx,g.cy,g.r*1.04,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([g.r*.16, g.r*.3]);
+    ctx.lineDashOffset = -spin*g.r*1.2;
+    ctx.lineWidth = Math.max(1.5, g.r*.012);
+    ctx.strokeStyle = `rgba(${ORANGE},.75)`;
+    ctx.beginPath(); ctx.ellipse(g.cx,g.cy,g.r*1.32,g.r*1.18,-.25,0,Math.PI*2); ctx.stroke();
+    ctx.setLineDash([]); ctx.lineDashOffset = 0;
+
+    // edges, back to front
+    ctx.lineWidth = Math.max(.6, g.r*.0035);
+    for (const [i,j] of E){
+      const a=P[i], b=P[j], d=(a.z+b.z)/2;
+      ctx.strokeStyle = `rgba(${ORANGE},${(.12 + .6*(d+1)/2).toFixed(3)})`;
+      ctx.beginPath(); ctx.moveTo(a.X,a.Y); ctx.lineTo(b.X,b.Y); ctx.stroke();
+    }
+    // nodes
+    const unit = Math.max(1, g.r/150);
+    P.forEach((p,i)=>{
+      const k = (p.z+1)/2;
+      ctx.fillStyle = `rgba(${ORANGE},${(.35+.65*k).toFixed(3)})`;
+      ctx.beginPath(); ctx.arc(p.X,p.Y,pts[i].s*unit*(.6+.7*k),0,Math.PI*2); ctx.fill();
+    });
+
+    // feature labels (only around the Features section)
+    if (g.lb > .02){
+      const fs = Math.max(11, g.r*.06);
+      ctx.font = `italic 600 ${fs}px Montserrat, sans-serif`;
+      ctx.textBaseline = 'middle';
+      let best = null;
+      const LP = labels.map(l=>({l, p:proj(l)}));
+      LP.forEach(o=>{ if (!best || o.p.z > best.p.z) best = o; });
+      LP.forEach(({l,p})=>{
+        if (p.z < -.15) return;
+        // fade labels that cross the FEATURES word in the middle
+        const dc = Math.abs(p.Y-g.cy)/g.r;
+        const a = g.lb * Math.min(1,(p.z+.15)/.6) * Math.min(1, Math.max(.08,(dc-.12)/.25)) * g.al;
+        const right = p.X >= g.cx;
+        const lx = p.X + (right? fs*.9 : -fs*.9);
+        ctx.globalAlpha = a;
+        ctx.strokeStyle = `rgba(${ORANGE},.9)`; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.moveTo(p.X,p.Y); ctx.lineTo(lx - (right?fs*.2:-fs*.2), p.Y); ctx.stroke();
+        ctx.fillStyle = `rgb(${ORANGE})`;
+        ctx.beginPath(); ctx.arc(p.X,p.Y,unit*3,0,Math.PI*2); ctx.fill();
+        if (best && best.l===l){            // current "selected" location
+          ctx.strokeStyle = `rgba(${ORANGE},.9)`; ctx.lineWidth = 1.5;
+          ctx.beginPath(); ctx.arc(p.X,p.Y,unit*9,0,Math.PI*2); ctx.stroke();
+        }
+        ctx.fillStyle = best && best.l===l ? '#5cc4f2' : '#2E9BD6';
+        ctx.textAlign = right ? 'left' : 'right';
+        ctx.fillText(l.t, lx, p.Y);
+      });
+    }
+    ctx.globalAlpha = 1;
+    requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+
+  /* dot-nav state */
+  const links = [...document.querySelectorAll('.dots a')];
+  // header: which top-level link owns each section
+  const owner = {product:'#product', who:'#who', why:'#who', features:'#features', 'smart-display':'#features', services:'#features'};
+  const topLinks = [...document.querySelectorAll('.topnav a')];
+  const io = new IntersectionObserver(es=>es.forEach(e=>{
+    if (!e.isIntersecting) return;
+    links.forEach(l=>l.setAttribute('aria-current', l.hash==='#'+e.target.id));
+    topLinks.forEach(l=>l.setAttribute('aria-current', l.hash===owner[e.target.id]));
+  }),{rootMargin:'-45% 0px -45% 0px'});
+  document.querySelectorAll('main section').forEach(s=>io.observe(s));
+
+  // in-page links: Home goes to the very top, others to the top of their section
+  document.querySelectorAll('.topnav a, .dots a').forEach(a=>a.addEventListener('click', e=>{
+    e.preventDefault();
+    const top = a.hasAttribute('data-top') ? 0
+      : document.querySelector(a.hash).getBoundingClientRect().top + scrollY;
+    scrollTo({top, behavior: reduce.matches ? 'auto' : 'smooth'});
+  }));
+})();
+
+/* ---------- hero: white panel melts into the night as you scroll ---------- */
+(function(){
+  const hero = document.getElementById('product');
+  const set = ()=>{
+    const f = Math.min(1, Math.max(0, scrollY / (hero.offsetHeight*0.6)));
+    hero.style.setProperty('--fade', f.toFixed(3));
+  };
+  addEventListener('scroll', set, {passive:true}); addEventListener('resize', set); set();
+})();
+
+/* ---------- information cards ---------- */
+(function(){
+  const cards = [...document.querySelectorAll('.card')];
+  const setOpen = (card, on)=>{
+    card.classList.toggle('open', on);
+    card.querySelector('.dot').setAttribute('aria-expanded', on);
+  };
+  cards.forEach(card=>{
+    const dot = card.querySelector('.dot');
+    dot.addEventListener('click', ()=>{
+      const on = !card.classList.contains('open');
+      cards.forEach(c=>c!==card && setOpen(c,false));
+      setOpen(card,on);
+    });
+    // keep aria-expanded truthful for pointer hover too
+    card.addEventListener('mouseenter', ()=>dot.setAttribute('aria-expanded', true));
+    card.addEventListener('mouseleave', ()=>dot.setAttribute('aria-expanded', card.classList.contains('open')));
+  });
+  document.addEventListener('keydown', e=>{
+    if (e.key!=='Escape') return;
+    cards.forEach(c=>setOpen(c,false));
+    document.activeElement?.blur?.();
+  });
+  document.addEventListener('click', e=>{
+    if (!e.target.closest('.card')) cards.forEach(c=>setOpen(c,false));
+  });
+})();
+</script>
+</body>
+</html>

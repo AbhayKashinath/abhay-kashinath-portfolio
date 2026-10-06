@@ -1,0 +1,255 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Canine Kitchen Encyclopedia</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..700&display=swap" rel="stylesheet">
+<style>
+/* Flip-book viewer, themed to match the portfolio: deep bottle green and white.
+   Pages are the book's scans (p01 = front cover … p24, then back.jpg). */
+:root {
+  --deep: #22302A;          /* stage */
+  --deep-2: #1A2621;
+  --white: #FBFBF8;         /* paper, controls */
+  --ink: #1A221E;
+  --accent: #C8D6F2;        /* the portfolio's periwinkle */
+  --soft: rgba(238, 242, 236, .68);
+  --pageW: 240px;
+  --ratio: 1.357;           /* page height ÷ width (1474 × 2000 scans) */
+  --pageH: calc(var(--pageW) * var(--ratio));
+  --flip: .9s;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; }
+body {
+  font-family: "Schibsted Grotesk", system-ui, sans-serif;
+  color: var(--white);
+  background:
+    radial-gradient(60% 55% at 50% 45%, rgba(251, 251, 248, .10), transparent 72%),
+    linear-gradient(180deg, var(--deep), var(--deep-2));
+  overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+.stage { position: relative; width: 100%; height: 100%; }
+
+/* ---------- the book ---------- */
+.shadow {
+  position: absolute; left: 50%; top: var(--cy, 46%);
+  width: calc(var(--pageW) * 1.1); height: calc(var(--pageH) * .92);
+  transform: translate(-50%, -46%);
+  background: radial-gradient(58% 54% at 50% 58%, rgba(0, 0, 0, .5), transparent 74%);
+  filter: blur(12px); transition: width var(--flip);
+}
+.book-area {
+  position: absolute; left: 50%; top: var(--cy, 46%);
+  width: var(--pageW); height: var(--pageH);
+  transform: translate(-50%, -50%);
+  perspective: 2200px; transform-style: preserve-3d;
+}
+.book { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
+  transition: transform var(--flip) cubic-bezier(.4, .05, .2, 1); }
+.leaf { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d;
+  transition: transform var(--flip) cubic-bezier(.45, .04, .26, 1); will-change: transform; }
+.leaf.flipped { transform: rotateY(-180deg); }
+.leaf.turning { z-index: 200 !important; }
+.face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: var(--white) center / cover no-repeat; }
+.face.back { transform: rotateY(180deg); }
+.face.page { border-radius: 1px 4px 4px 1px; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
+.face.page.back { border-radius: 4px 1px 1px 4px; }
+/* gutter shading so an open spread reads as one book */
+.face.page::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(to right, rgba(26, 34, 30, .18), transparent 10%); }
+.face.page.back::after { background: linear-gradient(to left, rgba(26, 34, 30, .18), transparent 10%); }
+.face.cover { border-radius: 2px 6px 6px 2px; box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
+.face.cover.back { border-radius: 6px 2px 2px 6px; }
+.face.endpaper { background: linear-gradient(180deg, #F3F4F0, #E6E9E3); }
+.book.closed { cursor: pointer; }
+@media (hover: hover) { .book.closed:hover { transform: translateY(-4px) scale(1.01); } }
+
+/* ---------- page-turn buttons ---------- */
+.turn {
+  position: absolute; top: var(--cy, 46%); transform: translate(-50%, -50%);
+  width: 46px; height: 46px; border-radius: 50%;
+  display: grid; place-items: center;
+  border: 1px solid rgba(251, 251, 248, .35);
+  background: rgba(251, 251, 248, .12);
+  color: var(--white); cursor: pointer; z-index: 5;
+  transition: transform .15s, opacity .25s, background-color .2s, left var(--flip) cubic-bezier(.4, .05, .2, 1);
+  -webkit-tap-highlight-color: transparent;
+}
+.turn svg { width: 20px; height: 20px; }
+.narrow .turn { width: 34px; height: 34px; }
+.narrow .turn svg { width: 16px; height: 16px; }
+.turn:hover:not([disabled]) { background: var(--white); color: var(--ink); }
+.turn:active:not([disabled]) { transform: translate(-50%, -50%) scale(.94); }
+.turn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
+.turn[disabled] { opacity: .25; cursor: not-allowed; }
+/* first-run cue: the forward button glows until the book is opened */
+.turn.cue { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.turn.cue::after { content: ""; position: absolute; inset: -5px; border-radius: 50%;
+  border: 2px solid rgba(200, 214, 242, .7); animation: ring 1.8s ease-out infinite; }
+@keyframes ring { 0% { transform: scale(.85); opacity: .9; } 100% { transform: scale(1.45); opacity: 0; } }
+
+/* ---------- readout ---------- */
+.readout {
+  position: absolute; left: 0; right: 0; bottom: 14px;
+  display: grid; justify-items: center; gap: 2px; text-align: center; padding-inline: 16px;
+}
+.counter { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hint { font-size: 12.5px; color: var(--soft); }
+
+@media (prefers-reduced-motion: reduce) {
+  :root { --flip: .001s; }
+  .turn.cue::after { animation: none; }
+  .book.closed:hover { transform: none; }
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="shadow" id="shadow"></div>
+  <div class="book-area"><div class="book" id="book"></div></div>
+  <button class="turn" id="prev" type="button" aria-label="Previous page">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 18l-6-6 6-6"/></svg>
+  </button>
+  <button class="turn" id="next" type="button" aria-label="Open the book">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
+  </button>
+  <div class="readout">
+    <p class="counter" id="counter" aria-live="polite">Front cover</p>
+    <p class="hint" id="hint">Select the cover or the arrow to open the book.</p>
+  </div>
+</div>
+
+<script>
+/* Faces in reading order: front cover, pages, blank inside back, back cover.
+   Two faces make one leaf. Only leaves near the open spread load their images. */
+const SCANS = Array.from({ length: 24 }, (_, i) => 'p' + String(i + 1).padStart(2, '0') + '.jpg');
+const faces = SCANS.map((img, i) => ({ img, cover: i === 0 }));
+faces.push({ endpaper: true });
+faces.push({ img: 'back.jpg', cover: true });
+
+const stage = document.getElementById('stage');
+const book = document.getElementById('book');
+const shadow = document.getElementById('shadow');
+const prevBtn = document.getElementById('prev');
+const nextBtn = document.getElementById('next');
+const counter = document.getElementById('counter');
+const hint = document.getElementById('hint');
+
+const leaves = [];
+for (let i = 0; i < faces.length; i += 2) leaves.push({ front: faces[i], back: faces[i + 1] });
+const N = leaves.length;
+let current = 0, animating = false, turningLeaf = null, narrow = false;
+
+function faceEl(spec, side) {
+  const el = document.createElement('div');
+  el.className = 'face ' + side + (spec.endpaper ? ' endpaper' : spec.cover ? ' cover' : ' page');
+  if (spec.img) el.dataset.img = spec.img;
+  return el;
+}
+leaves.forEach((leaf, i) => {
+  const el = document.createElement('div');
+  el.className = 'leaf';
+  el.append(faceEl(leaf.front, 'front'), faceEl(leaf.back, 'back'));
+  leaf.el = el;
+  book.appendChild(el);
+});
+
+// load images for the spreads around the current one
+function loadNear() {
+  leaves.forEach((leaf, i) => {
+    if (Math.abs(i - current) > 2) return;
+    leaf.el.querySelectorAll('.face[data-img]').forEach((f) => {
+      if (!f.style.backgroundImage) f.style.backgroundImage = 'url("' + f.dataset.img + '")';
+    });
+  });
+}
+
+// fit an open two-page spread plus its buttons inside the stage
+function sizeBook() {
+  const W = stage.clientWidth, H = stage.clientHeight;
+  narrow = W < 560;
+  document.body.classList.toggle('narrow', narrow);
+  const byWidth = (W - (narrow ? 56 : 140)) / 2;
+  const byHeight = (H - 90) / 1.357;
+  const pw = Math.max(90, Math.min(byWidth, byHeight, 420));
+  document.documentElement.style.setProperty('--pageW', pw + 'px');
+  document.documentElement.style.setProperty('--cy', ((H - 60) / 2 / H * 100) + '%');
+}
+
+function label() {
+  if (current === 0) return 'Front cover';
+  if (current === N) return 'Back cover';
+  return 'Spread ' + current + ' of ' + (N - 1);
+}
+
+function render() {
+  sizeBook();
+  loadNear();
+  leaves.forEach((leaf, i) => {
+    const flipped = i < current;
+    leaf.el.classList.toggle('flipped', flipped);
+    leaf.el.style.zIndex = flipped ? i : N - i;
+    leaf.el.classList.toggle('turning', i === turningLeaf);
+  });
+  const w = book.offsetWidth;
+  const open = current > 0 && current < N;
+  book.style.transform = 'translateX(' + (current === 0 ? 0 : current === N ? w : w / 2) + 'px)';
+  book.classList.toggle('closed', current === 0);
+  shadow.style.width = open ? 'calc(var(--pageW) * 2.1)' : 'calc(var(--pageW) * 1.1)';
+
+  const cx = stage.clientWidth / 2, half = open ? w : w / 2;
+  const gap = narrow ? 16 : 34;
+  prevBtn.style.left = Math.max(18, cx - half - gap) + 'px';
+  nextBtn.style.left = Math.min(stage.clientWidth - 18, cx + half + gap) + 'px';
+  prevBtn.disabled = current === 0;
+  nextBtn.disabled = current === N;
+  nextBtn.classList.toggle('cue', current === 0);
+  nextBtn.setAttribute('aria-label', current === 0 ? 'Open the book' : 'Next page');
+
+  counter.textContent = label();
+  hint.textContent = current === 0 ? 'Select the cover or the arrow to open the book.'
+    : current === N ? 'That’s the back cover. Use the left arrow to page back.'
+    : 'Use the arrows, or the arrow keys, to turn the pages.';
+}
+
+function go(dir) {
+  if (animating) return;
+  const target = Math.max(0, Math.min(N, current + dir));
+  if (target === current) return;
+  turningLeaf = dir > 0 ? current : current - 1;
+  animating = true;
+  current = target;
+  render();
+  const el = leaves[turningLeaf].el;
+  const done = (e) => {
+    if (e && e.target !== el) return;
+    el.removeEventListener('transitionend', done);
+    turningLeaf = null; animating = false; render();
+  };
+  el.addEventListener('transitionend', done);
+  setTimeout(done, 1200);
+}
+
+prevBtn.addEventListener('click', () => go(-1));
+nextBtn.addEventListener('click', () => go(+1));
+book.addEventListener('click', (e) => {
+  if (current === 0) return go(+1);
+  const r = book.parentElement.getBoundingClientRect();
+  go(e.clientX < r.left + r.width / 2 ? -1 : +1);
+});
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'ArrowRight') go(+1);
+  if (e.key === 'ArrowLeft') go(-1);
+});
+new ResizeObserver(render).observe(stage);
+render();
+</script>
+</body>
+</html>
