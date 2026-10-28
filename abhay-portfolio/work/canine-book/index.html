@@ -8,104 +8,137 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:wght@400..700&display=swap" rel="stylesheet">
 <style>
-/* Flip-book viewer, themed to match the portfolio: deep bottle green and white.
-   Pages are the book's scans (p01 = front cover … p24, then back.jpg). */
+/* Flip-book viewer. Transparent, so the book sits straight on the portfolio page.
+   Faces in reading order: cover.jpg (front cover), p02–p24, a blank endpaper, back.jpg. */
 :root {
-  --deep: #22302A;          /* stage */
-  --deep-2: #1A2621;
-  --white: #FBFBF8;         /* paper, controls */
   --ink: #1A221E;
-  --accent: #C8D6F2;        /* the portfolio's periwinkle */
-  --soft: rgba(238, 242, 236, .68);
+  --ink-soft: #5C6660;
+  --line: #DDE2DA;
+  --paper: #FBFBF8;
+  --accent: #C8D6F2;
   --pageW: 240px;
-  --ratio: 1.357;           /* page height ÷ width (1474 × 2000 scans) */
+  --ratio: 1.357;                         /* inside pages, height ÷ width (1474 × 2000 scans) */
   --pageH: calc(var(--pageW) * var(--ratio));
-  --flip: .9s;
+  --overhang: 3.36%;                      /* hardcover boards stand a little taller than the pages */
+  --flip: 1s;
+  --ease: cubic-bezier(.65, .05, .36, 1);
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; }
 body {
   font-family: "Schibsted Grotesk", system-ui, sans-serif;
-  color: var(--white);
-  background:
-    radial-gradient(60% 55% at 50% 45%, rgba(251, 251, 248, .10), transparent 72%),
-    linear-gradient(180deg, var(--deep), var(--deep-2));
+  color: var(--ink);
+  background: transparent;
   overflow: hidden;
   -webkit-font-smoothing: antialiased;
 }
-
 .stage { position: relative; width: 100%; height: 100%; }
 
 /* ---------- the book ---------- */
 .shadow {
   position: absolute; left: 50%; top: var(--cy, 46%);
-  width: calc(var(--pageW) * 1.1); height: calc(var(--pageH) * .92);
+  width: calc(var(--pageW) * 1.05); height: calc(var(--pageH) * 1.02);
   transform: translate(-50%, -46%);
-  background: radial-gradient(58% 54% at 50% 58%, rgba(0, 0, 0, .5), transparent 74%);
-  filter: blur(12px); transition: width var(--flip);
+  background: radial-gradient(60% 56% at 50% 60%, rgba(26, 34, 30, .32), transparent 72%);
+  filter: blur(14px);
+  transition: width var(--flip) var(--ease), transform var(--flip) var(--ease);
 }
 .book-area {
   position: absolute; left: 50%; top: var(--cy, 46%);
   width: var(--pageW); height: var(--pageH);
   transform: translate(-50%, -50%);
-  perspective: 2200px; transform-style: preserve-3d;
+  perspective: 2400px; transform-style: preserve-3d;
 }
 .book { position: relative; width: 100%; height: 100%; transform-style: preserve-3d;
-  transition: transform var(--flip) cubic-bezier(.4, .05, .2, 1); }
+  transition: transform var(--flip) var(--ease); }
 .leaf { position: absolute; inset: 0; transform-origin: left center; transform-style: preserve-3d;
-  transition: transform var(--flip) cubic-bezier(.45, .04, .26, 1); will-change: transform; }
+  transition: transform var(--flip) var(--ease); will-change: transform; }
 .leaf.flipped { transform: rotateY(-180deg); }
-.leaf.turning { z-index: 200 !important; }
+
 .face { position: absolute; inset: 0; overflow: hidden; backface-visibility: hidden; -webkit-backface-visibility: hidden;
-  background: var(--white) center / cover no-repeat; }
+  background: var(--paper) center / cover no-repeat; }
 .face.back { transform: rotateY(180deg); }
-.face.page { border-radius: 1px 4px 4px 1px; box-shadow: 0 1px 2px rgba(0, 0, 0, .25); }
-.face.page.back { border-radius: 4px 1px 1px 4px; }
-/* gutter shading so an open spread reads as one book */
+.face.page { border-radius: 1px 3px 3px 1px; box-shadow: 0 0 0 .5px rgba(26, 34, 30, .08); }
+.face.page.back { border-radius: 3px 1px 1px 3px; }
+/* gutter shading so an open spread reads as one bound book */
 .face.page::after { content: ""; position: absolute; inset: 0; pointer-events: none;
-  background: linear-gradient(to right, rgba(26, 34, 30, .18), transparent 10%); }
-.face.page.back::after { background: linear-gradient(to left, rgba(26, 34, 30, .18), transparent 10%); }
-.face.cover { border-radius: 2px 6px 6px 2px; box-shadow: 0 8px 22px rgba(0, 0, 0, .45); }
-.face.cover.back { border-radius: 6px 2px 2px 6px; }
-.face.endpaper { background: linear-gradient(180deg, #F3F4F0, #E6E9E3); }
+  background: linear-gradient(to right, rgba(26, 34, 30, .16), transparent 9%); }
+.face.page.back::after { background: linear-gradient(to left, rgba(26, 34, 30, .16), transparent 9%); }
+.face.endpaper { background: linear-gradient(180deg, #F3F1EA, #E8E4D9); }
+
+/* covers: the full artwork, a touch taller than the pages, with a hardcover edge */
+.face.cover { top: calc(var(--overhang) * -1); bottom: calc(var(--overhang) * -1);
+  border-radius: 2px 5px 5px 2px;
+  box-shadow: 0 10px 24px -6px rgba(26, 34, 30, .45), 0 0 0 1px rgba(0, 0, 0, .18); }
+.face.cover.back { border-radius: 5px 2px 2px 5px; background-color: #382A14; background-size: 100% auto; }
+.face.cover::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(90deg, rgba(0, 0, 0, .28), rgba(255, 255, 255, .06) 3%, transparent 7%); }
+.face.cover.back::after { background: linear-gradient(270deg, rgba(0, 0, 0, .28), rgba(255, 255, 255, .06) 3%, transparent 7%); }
+
+/* ---------- page-turn lighting ----------
+   A turning page darkens as it lifts and brightens as it lands, and casts a
+   passing shadow on the page it uncovers. */
+.face > .shade { position: absolute; inset: 0; pointer-events: none; opacity: 0; }
+.face.front > .shade { background: linear-gradient(to left, rgba(26, 34, 30, .42), rgba(26, 34, 30, .08) 70%, transparent); }
+.face.back  > .shade { background: linear-gradient(to right, rgba(26, 34, 30, .42), rgba(26, 34, 30, .08) 70%, transparent); }
+.leaf.turning > .face > .shade { animation: lift var(--dur, var(--flip)) var(--ease); }
+@keyframes lift { 0% { opacity: 0; } 45% { opacity: 1; } 100% { opacity: 0; } }
+.leaf.uncover-right > .face.front > .shade,
+.leaf.uncover-left  > .face.back  > .shade { animation: uncover var(--flip) var(--ease); }
+@keyframes uncover { 0% { opacity: .9; } 100% { opacity: 0; } }
+
 .book.closed { cursor: pointer; }
-@media (hover: hover) { .book.closed:hover { transform: translateY(-4px) scale(1.01); } }
+@media (hover: hover) { .book.closed:hover { transform: translateY(-4px) rotateZ(-.4deg); } }
 
 /* ---------- page-turn buttons ---------- */
 .turn {
   position: absolute; top: var(--cy, 46%); transform: translate(-50%, -50%);
   width: 46px; height: 46px; border-radius: 50%;
   display: grid; place-items: center;
-  border: 1px solid rgba(251, 251, 248, .35);
-  background: rgba(251, 251, 248, .12);
-  color: var(--white); cursor: pointer; z-index: 5;
-  transition: transform .15s, opacity .25s, background-color .2s, left var(--flip) cubic-bezier(.4, .05, .2, 1);
+  border: 1px solid var(--line);
+  background: var(--paper);
+  color: var(--ink); cursor: pointer; z-index: 5;
+  box-shadow: 0 4px 14px -6px rgba(26, 34, 30, .25);
+  transition: transform .2s, opacity .25s, background-color .2s, color .2s, left var(--flip) var(--ease);
   -webkit-tap-highlight-color: transparent;
 }
 .turn svg { width: 20px; height: 20px; }
-.narrow .turn { width: 34px; height: 34px; }
-.narrow .turn svg { width: 16px; height: 16px; }
-.turn:hover:not([disabled]) { background: var(--white); color: var(--ink); }
-.turn:active:not([disabled]) { transform: translate(-50%, -50%) scale(.94); }
-.turn:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; }
-.turn[disabled] { opacity: .25; cursor: not-allowed; }
+.turn:hover:not([disabled]) { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.turn:active:not([disabled]) { transform: translate(-50%, -50%) scale(.92); }
+.turn:focus-visible, .close-book:focus-visible { outline: 2px solid var(--ink); outline-offset: 3px; }
+.turn[disabled] { opacity: .3; cursor: not-allowed; }
 /* first-run cue: the forward button glows until the book is opened */
-.turn.cue { background: var(--accent); border-color: var(--accent); color: var(--ink); }
+.turn.cue { background: var(--accent); border-color: var(--accent); }
 .turn.cue::after { content: ""; position: absolute; inset: -5px; border-radius: 50%;
-  border: 2px solid rgba(200, 214, 242, .7); animation: ring 1.8s ease-out infinite; }
+  border: 2px solid var(--accent); animation: ring 1.8s ease-out infinite; }
 @keyframes ring { 0% { transform: scale(.85); opacity: .9; } 100% { transform: scale(1.45); opacity: 0; } }
+.narrow .turn { width: 36px; height: 36px; }
+.narrow .turn svg { width: 16px; height: 16px; }
 
 /* ---------- readout ---------- */
 .readout {
-  position: absolute; left: 0; right: 0; bottom: 14px;
-  display: grid; justify-items: center; gap: 2px; text-align: center; padding-inline: 16px;
+  position: absolute; left: 0; right: 0; bottom: 10px;
+  display: grid; justify-items: center; gap: 6px; text-align: center; padding-inline: 16px;
 }
+.readout__row { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; justify-content: center; }
 .counter { font-size: 14px; font-weight: 600; font-variant-numeric: tabular-nums; }
-.hint { font-size: 12.5px; color: var(--soft); }
+.hint { font-size: 12.5px; color: var(--ink-soft); }
+.close-book {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px 6px 10px;
+  border: 1px solid var(--line); border-radius: 999px;
+  background: var(--paper); color: var(--ink);
+  font: inherit; font-size: 13px; font-weight: 600; cursor: pointer;
+  transition: background-color .2s, color .2s, border-color .2s, transform .2s, opacity .25s;
+}
+.close-book svg { width: 15px; height: 15px; }
+.close-book:hover { background: var(--ink); color: var(--paper); border-color: var(--ink); }
+.close-book:active { transform: scale(.95); }
+.close-book[hidden] { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
   :root { --flip: .001s; }
-  .turn.cue::after { animation: none; }
+  .turn.cue::after, .leaf > .face > .shade { animation: none !important; }
   .book.closed:hover { transform: none; }
 }
 </style>
@@ -121,39 +154,45 @@ body {
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 18l6-6-6-6"/></svg>
   </button>
   <div class="readout">
-    <p class="counter" id="counter" aria-live="polite">Front cover</p>
+    <div class="readout__row">
+      <p class="counter" id="counter" aria-live="polite">Front cover</p>
+      <button class="close-book" id="close" type="button" hidden>
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 19.5V5a2 2 0 0 1 2-2h13v16H6.5A2.5 2.5 0 0 0 4 21.5Z"/><path d="M9 7h6"/></svg>
+        Back to cover
+      </button>
+    </div>
     <p class="hint" id="hint">Select the cover or the arrow to open the book.</p>
   </div>
 </div>
 
 <script>
-/* Faces in reading order: front cover, pages, blank inside back, back cover.
-   Two faces make one leaf. Only leaves near the open spread load their images. */
-const SCANS = Array.from({ length: 24 }, (_, i) => 'p' + String(i + 1).padStart(2, '0') + '.jpg');
-const faces = SCANS.map((img, i) => ({ img, cover: i === 0 }));
-faces.push({ endpaper: true });
-faces.push({ img: 'back.jpg', cover: true });
+const PAGES = Array.from({ length: 23 }, (_, i) => 'p' + String(i + 2).padStart(2, '0') + '.jpg');  // p02–p24
+const faces = [{ img: 'cover.jpg', cover: true }, ...PAGES.map((img) => ({ img })), { endpaper: true }, { img: 'back.jpg', cover: true }];
 
 const stage = document.getElementById('stage');
 const book = document.getElementById('book');
 const shadow = document.getElementById('shadow');
 const prevBtn = document.getElementById('prev');
 const nextBtn = document.getElementById('next');
+const closeBtn = document.getElementById('close');
 const counter = document.getElementById('counter');
 const hint = document.getElementById('hint');
+const reduce = matchMedia('(prefers-reduced-motion: reduce)');
 
 const leaves = [];
 for (let i = 0; i < faces.length; i += 2) leaves.push({ front: faces[i], back: faces[i + 1] });
 const N = leaves.length;
-let current = 0, animating = false, turningLeaf = null, narrow = false;
+let current = 0, animating = false, narrow = false;
 
 function faceEl(spec, side) {
   const el = document.createElement('div');
   el.className = 'face ' + side + (spec.endpaper ? ' endpaper' : spec.cover ? ' cover' : ' page');
   if (spec.img) el.dataset.img = spec.img;
+  const shade = document.createElement('div'); shade.className = 'shade';
+  el.appendChild(shade);
   return el;
 }
-leaves.forEach((leaf, i) => {
+leaves.forEach((leaf) => {
   const el = document.createElement('div');
   el.className = 'leaf';
   el.append(faceEl(leaf.front, 'front'), faceEl(leaf.back, 'back'));
@@ -161,7 +200,7 @@ leaves.forEach((leaf, i) => {
   book.appendChild(el);
 });
 
-// load images for the spreads around the current one
+// load images for the spreads around the current one (all of them once the book has been read)
 function loadNear() {
   leaves.forEach((leaf, i) => {
     if (Math.abs(i - current) > 2) return;
@@ -171,24 +210,26 @@ function loadNear() {
   });
 }
 
-// fit an open two-page spread plus its buttons inside the stage
+// fit an open two-page spread, the taller covers and the buttons inside the stage
 function sizeBook() {
   const W = stage.clientWidth, H = stage.clientHeight;
   narrow = W < 560;
   document.body.classList.toggle('narrow', narrow);
-  const byWidth = (W - (narrow ? 56 : 140)) / 2;
-  const byHeight = (H - 90) / 1.357;
+  const byWidth = (W - (narrow ? 60 : 150)) / 2;
+  const byHeight = (H - 96) / 1.448;
   const pw = Math.max(90, Math.min(byWidth, byHeight, 420));
   document.documentElement.style.setProperty('--pageW', pw + 'px');
-  document.documentElement.style.setProperty('--cy', ((H - 60) / 2 / H * 100) + '%');
+  document.documentElement.style.setProperty('--cy', ((H - 66) / 2 / H * 100) + '%');
 }
 
+const shiftFor = (pos) => { const w = book.offsetWidth; return pos === 0 ? 0 : pos === N ? w : w / 2; };
 function label() {
   if (current === 0) return 'Front cover';
   if (current === N) return 'Back cover';
   return 'Spread ' + current + ' of ' + (N - 1);
 }
 
+// place everything for the current position (no turn in progress)
 function render() {
   sizeBook();
   loadNear();
@@ -196,49 +237,107 @@ function render() {
     const flipped = i < current;
     leaf.el.classList.toggle('flipped', flipped);
     leaf.el.style.zIndex = flipped ? i : N - i;
-    leaf.el.classList.toggle('turning', i === turningLeaf);
   });
-  const w = book.offsetWidth;
-  const open = current > 0 && current < N;
-  book.style.transform = 'translateX(' + (current === 0 ? 0 : current === N ? w : w / 2) + 'px)';
-  book.classList.toggle('closed', current === 0);
-  shadow.style.width = open ? 'calc(var(--pageW) * 2.1)' : 'calc(var(--pageW) * 1.1)';
+  book.style.transform = 'translateX(' + shiftFor(current) + 'px)';
+  placeChrome();
+}
 
-  const cx = stage.clientWidth / 2, half = open ? w : w / 2;
-  const gap = narrow ? 16 : 34;
-  prevBtn.style.left = Math.max(18, cx - half - gap) + 'px';
-  nextBtn.style.left = Math.min(stage.clientWidth - 18, cx + half + gap) + 'px';
-  prevBtn.disabled = current === 0;
-  nextBtn.disabled = current === N;
+// buttons, shadow and labels follow the book's position
+function placeChrome() {
+  const w = book.offsetWidth, open = current > 0 && current < N;
+  book.classList.toggle('closed', current === 0);
+  shadow.style.width = open ? 'calc(var(--pageW) * 2.08)' : 'calc(var(--pageW) * 1.05)';
+  // closed (either cover) the book is one page wide and centred; open, the spread is two pages wide
+  const cx = stage.clientWidth / 2, half = open ? w : w / 2, gap = narrow ? 18 : 38;
+  prevBtn.style.left = Math.max(20, cx - half - gap) + 'px';
+  nextBtn.style.left = Math.min(stage.clientWidth - 20, cx + half + gap) + 'px';
+  prevBtn.disabled = current === 0 || animating;
+  nextBtn.disabled = current === N || animating;
   nextBtn.classList.toggle('cue', current === 0);
   nextBtn.setAttribute('aria-label', current === 0 ? 'Open the book' : 'Next page');
-
+  closeBtn.hidden = current === 0;
+  closeBtn.disabled = animating;
   counter.textContent = label();
   hint.textContent = current === 0 ? 'Select the cover or the arrow to open the book.'
-    : current === N ? 'That’s the back cover. Use the left arrow to page back.'
+    : current === N ? 'That’s the back cover. Use the left arrow, or go back to the cover.'
     : 'Use the arrows, or the arrow keys, to turn the pages.';
 }
 
+const flash = (el, cls) => { el.classList.remove(cls); void el.offsetWidth; el.classList.add(cls); };
+
+// turn one page forward (+1) or back (-1)
 function go(dir) {
   if (animating) return;
   const target = Math.max(0, Math.min(N, current + dir));
   if (target === current) return;
-  turningLeaf = dir > 0 ? current : current - 1;
-  animating = true;
+  const turning = dir > 0 ? current : current - 1;
+  const el = leaves[turning].el;
   current = target;
-  render();
-  const el = leaves[turningLeaf].el;
+  loadNear();
+  animating = !reduce.matches;
+  el.style.zIndex = 200;
+  if (dir > 0) { el.classList.add('flipped'); if (leaves[turning + 1]) flash(leaves[turning + 1].el, 'uncover-right'); }
+  else { el.classList.remove('flipped'); if (leaves[turning - 1]) flash(leaves[turning - 1].el, 'uncover-left'); }
+  flash(el, 'turning');
+  book.style.transform = 'translateX(' + shiftFor(current) + 'px)';
+  placeChrome();
+  if (!animating) return render();
   const done = (e) => {
-    if (e && e.target !== el) return;
+    if (e && (e.target !== el || e.propertyName !== 'transform')) return;
     el.removeEventListener('transitionend', done);
-    turningLeaf = null; animating = false; render();
+    clearTimeout(safety);
+    leaves.forEach((l) => l.el.classList.remove('turning', 'uncover-right', 'uncover-left'));
+    animating = false;
+    render();
   };
+  const safety = setTimeout(done, 1400);
   el.addEventListener('transitionend', done);
-  setTimeout(done, 1200);
+}
+
+// close the book: the read pages riffle back one after another, then the cover lands
+function closeToCover() {
+  if (animating || current === 0) return;
+  const order = [];
+  for (let i = Math.min(current, N) - 1; i >= 0; i--) order.push(i);
+  if (reduce.matches) { current = 0; return render(); }
+  animating = true;
+  const per = Math.max(.55, Math.min(.8, 2.4 / order.length));          // seconds per leaf
+  const stagger = Math.max(45, Math.min(110, 1100 / order.length));     // ms between leaves
+  const from = current;
+  current = 0;
+  placeChrome();
+  order.forEach((i, k) => {
+    const el = leaves[i].el;
+    setTimeout(() => {
+      el.style.transitionDuration = per + 's';
+      el.style.setProperty('--dur', per + 's');
+      el.style.zIndex = 300 + k;
+      el.classList.remove('flipped');
+      flash(el, 'turning');
+      if (i === 0) {                                  // the cover: slide the book back to centre with it
+        book.style.transitionDuration = per + 's';
+        book.style.transform = 'translateX(0px)';
+      }
+    }, k * stagger);
+  });
+  // a book closed from its back cover starts by sliding from the right
+  if (from === N) book.style.transform = 'translateX(' + shiftFor(N) + 'px)';
+  setTimeout(() => {
+    leaves.forEach((l) => {
+      l.el.classList.remove('turning');
+      l.el.style.transitionDuration = '';
+      l.el.style.removeProperty('--dur');
+    });
+    book.style.transitionDuration = '';
+    animating = false;
+    render();
+    nextBtn.focus({ preventScroll: true });
+  }, (order.length - 1) * stagger + per * 1000 + 80);
 }
 
 prevBtn.addEventListener('click', () => go(-1));
 nextBtn.addEventListener('click', () => go(+1));
+closeBtn.addEventListener('click', closeToCover);
 book.addEventListener('click', (e) => {
   if (current === 0) return go(+1);
   const r = book.parentElement.getBoundingClientRect();
@@ -247,8 +346,9 @@ book.addEventListener('click', (e) => {
 document.addEventListener('keydown', (e) => {
   if (e.key === 'ArrowRight') go(+1);
   if (e.key === 'ArrowLeft') go(-1);
+  if (e.key === 'Home') closeToCover();
 });
-new ResizeObserver(render).observe(stage);
+new ResizeObserver(() => { if (!animating) render(); }).observe(stage);
 render();
 </script>
 </body>

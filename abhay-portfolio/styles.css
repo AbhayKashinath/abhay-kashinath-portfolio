@@ -516,8 +516,8 @@ ul { list-style: none; }
   width: 100%;
   aspect-ratio: 16 / 10;
   border: 0;
-  border-radius: var(--r-card);
-  background: var(--deep);
+  background: transparent;   /* the book sits straight on the page */
+  color-scheme: light;       /* keeps the frame transparent in dark-mode browsers too */
 }
 .flipbook figcaption { margin-top: var(--s-3); }
 .feature + .feature { margin-top: var(--section-gap); padding-top: var(--s-6); border-top: 1px solid var(--line); }
