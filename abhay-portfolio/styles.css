@@ -481,6 +481,10 @@ ul { list-style: none; }
   overscroll-behavior: contain;
 }
 .browser__view:focus-visible { outline-offset: -3px; }
+
+/* a slightly larger frame for the Palak Designers website */
+.site-show--roomy { grid-template-columns: minmax(0, 1fr) minmax(0, 2.3fr); }
+.site-show--roomy .browser__view { max-height: min(820px, 85vh); }
 .browser__view img { width: 100%; height: auto; }
 /* a frame no wider than its screenshot, so a small capture stays sharp */
 .browser--native { width: 100%; max-width: calc(var(--native-w) + 2px); justify-self: center; }
@@ -887,7 +891,8 @@ html:has(.skills[open]) { overflow: hidden; }   /* the page stays put behind the
   .case .row { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
   /* screenshot becomes a full-width 4:5 crop of the site's top, posts go two-up */
   .posts { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--s-3); }
-  .browser__view { max-height: 70vh; }
+  .browser__view,
+  .site-show--roomy .browser__view { max-height: 70vh; }
   .case__screens { grid-template-columns: minmax(0, 1fr); gap: var(--s-3); }
   .projects { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
   .hero__stats { padding: var(--s-4); gap: var(--s-3); }
