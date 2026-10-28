@@ -482,9 +482,10 @@ ul { list-style: none; }
 }
 .browser__view:focus-visible { outline-offset: -3px; }
 
-/* a slightly larger frame for the Palak Designers website */
-.site-show--roomy { grid-template-columns: minmax(0, 1fr) minmax(0, 2.3fr); }
-.site-show--roomy .browser__view { max-height: min(820px, 85vh); }
+/* the Palak Designers website gets the full content width, with its text above the frame */
+.site-show--roomy { grid-template-columns: minmax(0, 1fr); gap: var(--s-6); }
+.site-show--roomy .site-show__text { position: static; max-width: 62ch; }
+.site-show--roomy .browser__view { max-height: min(860px, 85vh); }
 .browser__view img { width: 100%; height: auto; }
 /* a frame no wider than its screenshot, so a small capture stays sharp */
 .browser--native { width: 100%; max-width: calc(var(--native-w) + 2px); justify-self: center; }
