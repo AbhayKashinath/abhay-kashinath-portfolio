@@ -396,6 +396,7 @@ ul { list-style: none; }
   padding: var(--s-7) var(--s-5) var(--s-5);
   border-radius: 0 0 var(--r-media) var(--r-media);
   background: linear-gradient(to bottom, transparent, rgba(0, 0, 0, .55));
+  pointer-events: none;   /* clicks pass through to the portrait underneath (the easter egg) */
 }
 .stat { display: flex; flex-direction: column; }
 .stat .t-h3 { font-weight: 600; }
