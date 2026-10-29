@@ -57,7 +57,10 @@
           </div>
 
           <figure class="hero__media media">
-            <img src="images/abhay-portrait.jpg" alt="Portrait of Abhay Kashinath" width="615" height="848">
+            <!-- easter egg: clicking the portrait opens #egg. No hover state on purpose. -->
+            <button type="button" class="egg-trigger" data-open-dialog="egg" aria-haspopup="dialog">
+              <img src="images/abhay-portrait.jpg" alt="Portrait of Abhay Kashinath" width="615" height="848">
+            </button>
           </figure>
 
           <div class="hero__stats">
@@ -489,6 +492,23 @@
 
   </div>
 
+  <!-- ============ EASTER EGG ============
+       Opens when the hero portrait is clicked. Nothing on the page hints at it. -->
+  <dialog class="skills egg surface-deep" id="egg" aria-labelledby="egg-title">
+    <div class="skills__inner">
+      <header class="skills__head">
+        <h2 class="skills__title" id="egg-title">You found it</h2>
+        <button type="button" class="skills__close" aria-label="Close">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+        </button>
+      </header>
+      <figure class="egg__fig">
+        <img src="images/easter-egg.webp" alt="Two-panel meme of Abhay in a red puffer jacket: turning away from 'Using AI for everything', then pointing approvingly at 'Using AI as a tool to fuel creativity'" width="1254" height="1254">
+        <figcaption>My honest take on AI.</figcaption>
+      </figure>
+    </div>
+  </dialog>
+
   <!-- ============ SKILLS PANEL ============
        Opens from the Skills button in the nav. Laid out like a design tool's layers panel:
        groups on the left, that group's skills on the right. -->
@@ -552,33 +572,30 @@
   </dialog>
 
   <script>
-    // Skills panel: opens with a circular reveal from the button that was pressed
-    (() => {
-      const dlg = document.getElementById('skills');
-      const tabs = [...dlg.querySelectorAll('[role="tab"]')];
+    // Panels (Skills, the easter egg): open with a circle growing from where you clicked,
+    // close by shrinking back. Close button, Esc and a click outside all close them.
+    function revealPanel(dlg, onOpen) {
       const reduce = matchMedia('(prefers-reduced-motion: reduce)');
       let opener = null;
 
-      // number each skill so they can enter one after another
-      dlg.querySelectorAll('.skills__chips').forEach((ul) =>
-        [...ul.children].forEach((li, i) => li.style.setProperty('--i', i)));
-
-      const open = (btn) => {
+      const open = (btn, e) => {
         opener = btn;
         dlg.classList.remove('is-closing');
         dlg.showModal();
-        // centre the reveal on the button, measured from the panel's own corner
+        // centre the reveal on the click (or the button, from the keyboard), measured from the panel's corner
         const b = btn.getBoundingClientRect(), d = dlg.getBoundingClientRect();
-        dlg.style.setProperty('--ox', b.left + b.width / 2 - d.left + 'px');
-        dlg.style.setProperty('--oy', b.top + b.height / 2 - d.top + 'px');
+        const x = e && e.clientX ? e.clientX : b.left + b.width / 2;
+        const y = e && e.clientY ? e.clientY : b.top + b.height / 2;
+        dlg.style.setProperty('--ox', x - d.left + 'px');
+        dlg.style.setProperty('--oy', y - d.top + 'px');
         btn.setAttribute('aria-expanded', 'true');
-        replay(dlg.querySelector('.skills__panel:not([hidden])'));
+        if (onOpen) onOpen();
       };
-      // hand focus back to the button that opened the panel
+      // hand focus back to whatever opened the panel
       const restore = () => {
         if (!opener) return;
         opener.setAttribute('aria-expanded', 'false');
-        opener.focus();
+        opener.focus({ preventScroll: true });
         opener = null;
       };
       const close = () => {
@@ -591,7 +608,7 @@
         };
         if (reduce.matches) return finish();
         dlg.classList.add('is-closing');
-        // only the panel's own closing animation counts, not the skills' entrance animations
+        // only the panel's own closing animation counts, not animations inside it
         dlg.addEventListener('animationend', function done(e) {
           if (e.target !== dlg) return;
           dlg.removeEventListener('animationend', done);
@@ -600,11 +617,30 @@
         setTimeout(finish, 500);   // safety net
       };
       dlg.addEventListener('close', restore);   // covers any other way the panel closes
+      dlg.querySelector('.skills__close').addEventListener('click', close);
+      dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });   // Esc
+      dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); }); // outside the panel
+      return open;
+    }
 
-      document.querySelectorAll('[data-open-skills]').forEach((b) => b.addEventListener('click', () => open(b)));
-      dlg.querySelector('[data-close-skills]').addEventListener('click', close);
-      dlg.addEventListener('cancel', (e) => { e.preventDefault(); close(); });                 // Esc
-      dlg.addEventListener('click', (e) => { if (e.target === dlg) close(); });               // backdrop
+    // Easter egg: the hero portrait opens it
+    (() => {
+      const dlg = document.getElementById('egg');
+      const open = revealPanel(dlg);
+      document.querySelectorAll('[data-open-dialog="egg"]').forEach((b) => b.addEventListener('click', (e) => open(b, e)));
+    })();
+
+    // Skills panel
+    (() => {
+      const dlg = document.getElementById('skills');
+      const tabs = [...dlg.querySelectorAll('[role="tab"]')];
+
+      // number each skill so they can enter one after another
+      dlg.querySelectorAll('.skills__chips').forEach((ul) =>
+        [...ul.children].forEach((li, i) => li.style.setProperty('--i', i)));
+
+      const open = revealPanel(dlg, () => replay(dlg.querySelector('.skills__panel:not([hidden])')));
+      document.querySelectorAll('[data-open-skills]').forEach((b) => b.addEventListener('click', (e) => open(b, e)));
 
       // restart the chips' staggered entrance
       function replay(panel) {

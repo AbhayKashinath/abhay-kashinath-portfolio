@@ -702,6 +702,41 @@ ul { list-style: none; }
 .btn--accent:empty { background: var(--accent); }
 
 /* =========================================================
+   EASTER EGG
+   The portrait is a plain-looking button: no hover state, no pointer cursor,
+   no tap flash. Clicking it opens #egg, styled like the Skills panel.
+   ========================================================= */
+.egg-trigger {
+  display: block;
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  color: inherit;
+  cursor: default;
+  -webkit-tap-highlight-color: transparent;
+}
+.egg-trigger img { width: 100%; height: 100%; object-fit: cover; }
+.egg-trigger:focus { outline: none; }
+.egg-trigger:focus-visible { outline: 2px solid var(--deep-ink); outline-offset: -6px; }   /* keyboard users still see where they are */
+
+/* sized so the square picture always fits on screen without scrolling */
+.skills.egg {
+  width: min(560px, calc(100vw - 32px), calc(100dvh - 190px));
+  min-width: min(300px, calc(100vw - 32px));
+  max-height: calc(100dvh - 32px);
+}
+.egg .skills__head { margin-bottom: var(--s-5); }
+.egg__fig img { display: block; width: 100%; height: auto; border-radius: var(--r-media); }
+.egg__fig figcaption {
+  margin-top: var(--s-3);
+  font-size: var(--fs-small);
+  color: color-mix(in srgb, var(--deep-ink) 70%, transparent);
+}
+
+/* =========================================================
    SKILLS PANEL
    Opens from the nav as a circle growing out of the button,
    laid out like a design tool's layers panel.
@@ -841,6 +876,8 @@ html:has(.skills[open]) { overflow: hidden; }   /* the page stays put behind the
   .skills__groups [role="tab"] { flex: none; white-space: nowrap; padding: 10px 14px; }
   .skills__groups [role="tab"][aria-selected="true"] { box-shadow: inset 0 -3px 0 var(--accent); }
   .skills__chips li { padding: 9px 15px; font-size: 14px; }
+  /* the easter egg stays a centred card rather than filling the screen */
+  .skills.egg { height: fit-content; max-height: calc(100dvh - 32px); border-radius: var(--r-card); }
 }
 
 /* =========================================================
